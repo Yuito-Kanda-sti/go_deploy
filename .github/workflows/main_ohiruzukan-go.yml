@@ -11,42 +11,41 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: 'ubuntu-latest'
 
     steps:
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@v2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
 
-      - name: Log in to container registry
-        uses: docker/login-action@v2
-        with:
-          registry: https://ohiruzukantetsregistry.azurecr.io/
-          username: ${{ secrets.AzureAppService_ContainerUsername_d592ddeaa19e460da4b04d3ace236f88 }}
-          password: ${{ secrets.AzureAppService_ContainerPassword_e982b81802c644cbaa7f146ca00f21df }}
+    - name: Log in to registry
+      uses: docker/login-action@v2
+      with:
+        registry: https://ohiruzukantetsregistry.azurecr.io/
+        username: ${{ secrets.AzureAppService_ContainerUsername_d592ddeaa19e460da4b04d3ace236f88 }}
+        password: ${{ secrets.AzureAppService_ContainerPassword_e982b81802c644cbaa7f146ca00f21df }}
 
-      - name: Build and push container image to registry
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          push: true
-          tags: ohiruzukantetsregistry.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_d592ddeaa19e460da4b04d3ace236f88 }}/test_go:${{ github.sha }}
-          file: ./Dockerfile
+    - name: Build and push container image to registry
+      uses: docker/build-push-action@v3
+      with:
+        push: true
+        tags: ohiruzukantetsregistry.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_d592ddeaa19e460da4b04d3ace236f88 }}/test_go:${{ github.sha }}
+        file: ./Dockerfile
 
-    deploy:
-      runs-on: ubuntu-latest
-      needs: build
-      environment:
-        name: 'production'
-        url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
-      steps:
-        - name: Deploy to Azure Web App
-          id: deploy-to-webapp
-          uses: azure/webapps-deploy@v2
-          with:
-            app-name: 'ohiruzukan-go'
-            slot-name: 'production'
-            publish-profile: ${{ secrets.AzureAppService_PublishProfile_b0126424ad1f463cadec12daadfb8af1 }}
-            images: 'ohiruzukantetsregistry.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_d592ddeaa19e460da4b04d3ace236f88 }}/test_go:${{ github.sha }}'
+    steps:
+    - name: Deploy to Azure Web App
+      id: deploy-to-webapp
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'ohiruzukan-go'
+        slot-name: 'production'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_b0126424ad1f463cadec12daadfb8af1 }}
+        images: 'ohiruzukantetsregistry.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_d592ddeaa19e460da4b04d3ace236f88 }}/test_go:${{ github.sha }}'
